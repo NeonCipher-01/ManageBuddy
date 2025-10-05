@@ -3,20 +3,39 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert 
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
 import { X } from 'lucide-react-native';
-import { EXPENSE_CATEGORIES, ExpenseCategory } from '@/types';
+import { EXPENSE_CATEGORIES, ExpenseCategory, getCategoryIcon } from '@/types';
 
 interface AddExpenseModalProps {
   onClose: () => void;
 }
 
 export default function AddExpenseModal({ onClose }: AddExpenseModalProps) {
-  const { theme, addExpense } = useApp();
+  const { theme, addExpense, userProfile, safeToSpend } = useApp();
   const colors = Colors[theme];
 
   const [amount, setAmount] = useState<string>('');
   const [category, setCategory] = useState<ExpenseCategory>('Food & Dining');
   const [note, setNote] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  const getFriendlyFeedback = (amount: number, category: ExpenseCategory, remainingAmount: number): string => {
+    const mode = userProfile?.mode || 'bro';
+    const categoryIcon = getCategoryIcon(category);
+    
+    if (mode === 'bro') {
+      if (remainingAmount > 0) {
+        return `${categoryIcon} Nice! Spent $${amount.toFixed(0)} on ${category}. Still got $${remainingAmount.toFixed(0)} left for today, bro! 💪`;
+      } else {
+        return `${categoryIcon} Added $${amount.toFixed(0)} for ${category}. Watch your spending today, bro! 😬`;
+      }
+    } else {
+      if (remainingAmount > 0) {
+        return `${categoryIcon} Expense recorded: $${amount.toFixed(0)} for ${category}. Remaining daily budget: $${remainingAmount.toFixed(0)}.`;
+      } else {
+        return `${categoryIcon} Expense recorded: $${amount.toFixed(0)} for ${category}. Daily budget exceeded. Exercise caution.`;
+      }
+    }
+  };
 
   const handleSave = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -31,7 +50,13 @@ export default function AddExpenseModal({ onClose }: AddExpenseModalProps) {
         category,
         note: note.trim() || ''
       });
-      Alert.alert('Success', 'Expense added successfully');
+      
+      // Calculate remaining amount for friendly feedback
+      const expenseAmount = parseFloat(amount);
+      const remainingAmount = (safeToSpend?.amount || 0) - expenseAmount;
+      const feedback = getFriendlyFeedback(expenseAmount, category, remainingAmount);
+      
+      Alert.alert('Expense Added! 🎉', feedback);
       onClose();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add expense');
@@ -80,6 +105,7 @@ export default function AddExpenseModal({ onClose }: AddExpenseModalProps) {
                   onPress={() => setCategory(cat)}
                   disabled={loading}
                 >
+                  <Text style={styles.categoryIcon}>{getCategoryIcon(cat)}</Text>
                   <Text 
                     style={[
                       styles.categoryText,
@@ -189,6 +215,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  categoryIcon: {
+    fontSize: 16,
   },
   categoryText: {
     fontSize: 14,

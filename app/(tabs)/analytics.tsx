@@ -3,10 +3,13 @@ import { Stack } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
 import { useMemo } from 'react';
+import { Flame } from 'lucide-react-native';
+import { getCategoryIcon, ExpenseCategory } from '@/types';
 
 export default function AnalyticsScreen() {
-  const { userProfile, expenses, safeToSpend, getEmotionalMessage, theme } = useApp();
+  const { userProfile, expenses, safeToSpend, getEmotionalMessage, getStreakData, theme } = useApp();
   const colors = Colors[theme];
+  const streakData = useMemo(() => getStreakData(), [getStreakData]);
 
   const categoryData = useMemo(() => {
     const now = new Date();
@@ -79,11 +82,28 @@ export default function AnalyticsScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.content}
       >
-        <View style={[styles.messageCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-          <Text style={[styles.messageText, { color: colors.text }]}>
-            {emotionalMessage}
-          </Text>
-        </View>
+        {streakData.currentStreak > 0 && (
+          <View style={[styles.streakCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
+            <View style={styles.streakHeader}>
+              <Flame size={32} color="#FF6B35" />
+              <View style={styles.streakInfo}>
+                <Text style={[styles.streakTitle, { color: colors.text }]}>
+                  {streakData.currentStreak} Day Streak! 🔥
+                </Text>
+                <Text style={[styles.streakSubtitle, { color: colors.textSecondary }]}>
+                  {userProfile?.mode === 'bro' 
+                    ? "You're on fire bro! Keep crushing it!"
+                    : "Excellent consistency. Maintain this discipline."}
+                </Text>
+              </View>
+            </View>
+            {streakData.longestStreak > streakData.currentStreak && (
+              <Text style={[styles.streakRecord, { color: colors.textSecondary }]}>
+                Personal best: {streakData.longestStreak} days
+              </Text>
+            )}
+          </View>
+        )}
 
         <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>Monthly Overview</Text>
@@ -114,7 +134,10 @@ export default function AnalyticsScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>Spending by Category</Text>
             {categoryData.map((item, index) => (
               <View key={index} style={styles.categoryRow}>
-                <Text style={[styles.categoryName, { color: colors.text }]}>{item.x}</Text>
+                <View style={styles.categoryNameContainer}>
+                  <Text style={styles.categoryIconSmall}>{getCategoryIcon(item.x as ExpenseCategory)}</Text>
+                  <Text style={[styles.categoryName, { color: colors.text }]}>{item.x}</Text>
+                </View>
                 <Text style={[styles.categoryAmount, { color: colors.primary }]}>{item.label}</Text>
               </View>
             ))}
@@ -159,19 +182,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
   },
-  messageCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  messageText: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    textAlign: 'center',
-  },
   card: {
     borderRadius: 16,
     padding: 20,
@@ -203,9 +213,18 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  categoryNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categoryIconSmall: {
+    fontSize: 18,
   },
   categoryName: {
     fontSize: 16,
@@ -239,5 +258,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     width: 50,
     textAlign: 'right',
+  },
+  streakCard: {
+    borderRadius: 16,
+    padding: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  streakHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  streakInfo: {
+    flex: 1,
+  },
+  streakTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  streakSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  streakRecord: {
+    fontSize: 12,
+    marginTop: 12,
+    fontStyle: 'italic' as const,
   },
 });

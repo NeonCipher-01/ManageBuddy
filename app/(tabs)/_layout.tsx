@@ -17,6 +17,7 @@ export default function TabLayout() {
           borderTopColor: colors.border,
         },
         headerShown: false,
+        // if you include here true then the top white place showing 
       }}
     >
       <Tabs.Screen

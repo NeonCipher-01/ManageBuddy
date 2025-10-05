@@ -115,3 +115,16 @@ export interface SpendingPrediction {
   isOnTrack: boolean;
   daysAnalyzed: number;
 }
+
+export function getCategoryIcon(category: ExpenseCategory): string {
+  const iconMap: Record<ExpenseCategory, string> = {
+    'Food & Dining': '🍔',
+    'Transportation': '🚗',
+    'Shopping': '🛍️',
+    'Entertainment': '🎮',
+    'Bills & Utilities': '💡',
+    'Healthcare': '⚕️',
+    'Other': '📦'
+  };
+  return iconMap[category];
+}

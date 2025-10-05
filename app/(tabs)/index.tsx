@@ -321,10 +321,7 @@ export default function HomeScreen() {
           <Text style={[styles.progressText, { color: colors.textSecondary }]}>
             {safeToSpend.percentageUsed.toFixed(1)}% of monthly budget used
           </Text>
-        </View>
-
-        <View style={[styles.messageCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-          <Text style={[styles.messageText, { color: colors.text }]}>
+          <Text style={[styles.mainCardMessage, { color: colors.text }]}>
             {emotionalMessage}
           </Text>
         </View>
@@ -348,12 +345,8 @@ export default function HomeScreen() {
             </View>
             <Text style={[styles.predictionText, { color: colors.textSecondary }]}>
               {prediction.isOnTrack 
-                ? userProfile.mode === 'bro'
-                  ? `🎉 You're crushing it bro! At this rate, you'll save ${Math.abs(prediction.projectedOverage).toFixed(0)}!`
-                  : `✅ Excellent pace. Projected savings: ${Math.abs(prediction.projectedOverage).toFixed(0)}`
-                : userProfile.mode === 'bro'
-                  ? `⚠️ Slow down bro! You might overspend by ${prediction.projectedOverage.toFixed(0)}`
-                  : `⚠️ Warning: Projected overage of ${prediction.projectedOverage.toFixed(0)}`
+                ? `Projected to save $${Math.abs(prediction.projectedOverage).toFixed(0)} by month end`
+                : `Projected to overspend by $${prediction.projectedOverage.toFixed(0)}`
               }
             </Text>
             <Text style={[styles.predictionSubtext, { color: colors.textSecondary }]}>
@@ -520,18 +513,14 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
   },
-  messageCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  messageText: {
-    fontSize: 18,
+  mainCardMessage: {
+    fontSize: 16,
     fontWeight: '600' as const,
     textAlign: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   statsRow: {
     flexDirection: 'row',
