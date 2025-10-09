@@ -3,11 +3,12 @@ import { Stack } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
 import { useMemo } from 'react';
+import { formatCurrency } from '@/utils/currency';
 import { Flame } from 'lucide-react-native';
 import { getCategoryIcon, ExpenseCategory } from '@/types';
 
 export default function AnalyticsScreen() {
-  const { userProfile, expenses, safeToSpend, getEmotionalMessage, getStreakData, theme } = useApp();
+  const { userProfile, expenses, safeToSpend, getEmotionalMessage, getStreakData, theme, currency } = useApp();
   const colors = Colors[theme];
   const streakData = useMemo(() => getStreakData(), [getStreakData]);
 
@@ -29,7 +30,7 @@ export default function AnalyticsScreen() {
     return Object.entries(categoryTotals).map(([category, amount]) => ({
       x: category,
       y: amount,
-      label: `$${amount.toFixed(0)}`
+      label: formatCurrency(amount, currency || 'USD', 0)
     }));
   }, [expenses]);
 
@@ -111,19 +112,19 @@ export default function AnalyticsScreen() {
             <View style={styles.overviewItem}>
               <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Income</Text>
               <Text style={[styles.overviewValue, { color: colors.success }]}>
-                ${userProfile.monthlyIncome.toFixed(0)}
+                {formatCurrency(userProfile.monthlyIncome, currency, 0)}
               </Text>
             </View>
             <View style={styles.overviewItem}>
               <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Bills</Text>
               <Text style={[styles.overviewValue, { color: colors.warning }]}>
-                ${userProfile.bills.toFixed(0)}
+                {formatCurrency(userProfile.bills, currency, 0)}
               </Text>
             </View>
             <View style={styles.overviewItem}>
               <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Spent</Text>
               <Text style={[styles.overviewValue, { color: colors.danger }]}>
-                ${safeToSpend.totalExpenses.toFixed(0)}
+                {formatCurrency(safeToSpend.totalExpenses, currency, 0)}
               </Text>
             </View>
           </View>
@@ -160,7 +161,7 @@ export default function AnalyticsScreen() {
                   ]} 
                 />
               </View>
-              <Text style={[styles.dayAmount, { color: colors.textSecondary }]}>${item.y.toFixed(0)}</Text>
+              <Text style={[styles.dayAmount, { color: colors.textSecondary }]}>{formatCurrency(item.y, currency, 0)}</Text>
             </View>
           ))}
         </View>

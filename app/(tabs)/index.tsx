@@ -244,8 +244,9 @@ import { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
-import { Plus, Moon, Sun, TrendingUp, TrendingDown, Award, Flame } from 'lucide-react-native';
+import { Plus, Moon, Sun } from 'lucide-react-native';
 import AddExpenseModal from '@/components/AddExpenseModal';
+import { formatCurrency } from '@/utils/currency';
 
 export default function HomeScreen() {
   const { 
@@ -253,18 +254,15 @@ export default function HomeScreen() {
     safeToSpend, 
     getEmotionalMessage, 
     getDynamicGreeting,
-    getSpendingPrediction,
     getStreakData,
-    getAchievements,
-    theme, 
+    theme,
+    currency,
     toggleTheme 
   } = useApp();
   const colors = Colors[theme];
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-  const prediction = useMemo(() => getSpendingPrediction(safeToSpend), [getSpendingPrediction, safeToSpend]);
   const streakData = useMemo(() => getStreakData(), [getStreakData]);
-  const achievements = useMemo(() => getAchievements(), [getAchievements]);
 
   if (!userProfile || !safeToSpend) {
     return (
@@ -274,7 +272,6 @@ export default function HomeScreen() {
     );
   }
 
-  const emotionalMessage = getEmotionalMessage(safeToSpend, userProfile.mode);
   const dynamicGreeting = getDynamicGreeting(userProfile.name, safeToSpend.percentageUsed, userProfile.mode);
 
   return (
@@ -296,7 +293,7 @@ export default function HomeScreen() {
       >
         <View style={styles.greeting}>
           <Text style={[styles.greetingText, { color: colors.text }]}>
-            {dynamicGreeting}
+            Hey {userProfile.name}! 👋
           </Text>
         </View>
 
@@ -305,7 +302,7 @@ export default function HomeScreen() {
             Safe to Spend Today
           </Text>
           <Text style={[styles.amount, { color: colors.primary }]}>
-            ${safeToSpend.amount.toFixed(2)}
+            {formatCurrency(safeToSpend.amount, currency)}
           </Text>
           <View style={styles.progressBar}>
             <View 
@@ -319,90 +316,15 @@ export default function HomeScreen() {
             />
           </View>
           <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-            {safeToSpend.percentageUsed.toFixed(1)}% of monthly budget used
-          </Text>
-          <Text style={[styles.mainCardMessage, { color: colors.text }]}>
-            {emotionalMessage}
+            {safeToSpend.percentageUsed.toFixed(1)}% used
           </Text>
         </View>
 
-        {prediction && (
-          <View style={[styles.predictionCard, { 
-            backgroundColor: prediction.isOnTrack ? colors.card : colors.card,
-            borderLeftWidth: 4,
-            borderLeftColor: prediction.isOnTrack ? colors.success : colors.danger,
-            shadowColor: colors.shadow 
-          }]}>
-            <View style={styles.predictionHeader}>
-              {prediction.isOnTrack ? (
-                <TrendingUp size={24} color={colors.success} />
-              ) : (
-                <TrendingDown size={24} color={colors.danger} />
-              )}
-              <Text style={[styles.predictionTitle, { color: colors.text }]}>
-                Spending Prediction
-              </Text>
-            </View>
-            <Text style={[styles.predictionText, { color: colors.textSecondary }]}>
-              {prediction.isOnTrack 
-                ? `Projected to save $${Math.abs(prediction.projectedOverage).toFixed(0)} by month end`
-                : `Projected to overspend by $${prediction.projectedOverage.toFixed(0)}`
-              }
-            </Text>
-            <Text style={[styles.predictionSubtext, { color: colors.textSecondary }]}>
-              Based on {prediction.daysAnalyzed} days of data
-            </Text>
-          </View>
-        )}
 
-        {streakData.currentStreak > 0 && (
-          <View style={[styles.streakCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-            <View style={styles.streakHeader}>
-              <Flame size={28} color="#FF6B35" />
-              <View style={styles.streakInfo}>
-                <Text style={[styles.streakTitle, { color: colors.text }]}>
-                  {streakData.currentStreak} Day Streak!
-                </Text>
-                <Text style={[styles.streakSubtitle, { color: colors.textSecondary }]}>
-                  {userProfile.mode === 'bro' 
-                    ? "You're on fire bro! Keep it going! 🔥"
-                    : "Excellent consistency. Maintain discipline."}
-                </Text>
-              </View>
-            </View>
-            {streakData.longestStreak > streakData.currentStreak && (
-              <Text style={[styles.streakRecord, { color: colors.textSecondary }]}>
-                Personal best: {streakData.longestStreak} days
-              </Text>
-            )}
-          </View>
-        )}
 
-        {achievements.length > 0 && (
-          <View style={[styles.achievementsCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-            <View style={styles.achievementsHeader}>
-              <Award size={24} color={colors.primary} />
-              <Text style={[styles.achievementsTitle, { color: colors.text }]}>
-                Recent Achievements
-              </Text>
-            </View>
-            <View style={styles.achievementsList}>
-              {achievements.slice(0, 3).map((achievement) => (
-                <View key={achievement.id} style={[styles.achievementItem, { backgroundColor: colors.background }]}>
-                  <Text style={styles.achievementIcon}>{achievement.icon}</Text>
-                  <View style={styles.achievementInfo}>
-                    <Text style={[styles.achievementTitle, { color: colors.text }]}>
-                      {achievement.title}
-                    </Text>
-                    <Text style={[styles.achievementDesc, { color: colors.textSecondary }]}>
-                      {achievement.description}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
+
+
+
 
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
@@ -413,11 +335,20 @@ export default function HomeScreen() {
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Spent This Month</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Spent</Text>
             <Text style={[styles.statValue, { color: colors.text }]}>
-              ${safeToSpend.totalExpenses.toFixed(0)}
+              {formatCurrency(safeToSpend.totalExpenses, currency, 0)}
             </Text>
           </View>
+
+          {streakData.currentStreak > 0 && (
+            <View style={[styles.statCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Streak</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>
+                🔥 {streakData.currentStreak}
+              </Text>
+            </View>
+          )}
         </View>
 
         <TouchableOpacity
@@ -476,9 +407,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   greetingText: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    lineHeight: 28,
+    fontSize: 18,
+    fontWeight: '600' as const,
   },
   mainCard: {
     borderRadius: 24,
@@ -512,15 +442,6 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-  },
-  mainCardMessage: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    textAlign: 'center',
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   statsRow: {
     flexDirection: 'row',
@@ -561,105 +482,5 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 8,
-  },
-  predictionCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  predictionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  predictionTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-  },
-  predictionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 8,
-  },
-  predictionSubtext: {
-    fontSize: 12,
-    fontStyle: 'italic' as const,
-  },
-  streakCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  streakHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  streakInfo: {
-    flex: 1,
-  },
-  streakTitle: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    marginBottom: 4,
-  },
-  streakSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  streakRecord: {
-    fontSize: 12,
-    marginTop: 12,
-    fontStyle: 'italic' as const,
-  },
-  achievementsCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  achievementsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  achievementsTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-  },
-  achievementsList: {
-    gap: 12,
-  },
-  achievementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    gap: 12,
-  },
-  achievementIcon: {
-    fontSize: 32,
-  },
-  achievementInfo: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    marginBottom: 2,
-  },
-  achievementDesc: {
-    fontSize: 13,
-    lineHeight: 18,
   },
 });

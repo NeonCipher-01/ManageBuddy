@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
-import { User, DollarSign, MessageSquare, LogOut, Moon, Sun } from 'lucide-react-native';
-import { PersonalityMode } from '@/types';
+import { User, DollarSign, MessageSquare, LogOut, Moon, Sun, Globe, Check, X } from 'lucide-react-native';
+import { PersonalityMode, CURRENCIES } from '@/types';
+import { getCurrencySymbol, getCurrencyName } from '@/utils/currency';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function SettingsScreen() {
   const [monthlyIncome, setMonthlyIncome] = useState<string>(userProfile?.monthlyIncome.toString() || '');
   const [bills, setBills] = useState<string>(userProfile?.bills.toString() || '');
   const [mode, setMode] = useState<PersonalityMode>(userProfile?.mode || 'bro');
+  const [currency, setCurrency] = useState<string>(userProfile?.currency || 'USD');
+  const [showCurrencyModal, setShowCurrencyModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleSave = async () => {
@@ -31,6 +34,7 @@ export default function SettingsScreen() {
         name: name.trim(),
         monthlyIncome: parseFloat(monthlyIncome),
         bills: parseFloat(bills) || 0,
+        currency,
         mode
       });
       Alert.alert('Success', 'Settings updated successfully');
@@ -102,6 +106,31 @@ export default function SettingsScreen() {
                 editable={!loading}
               />
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Globe size={20} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Currency</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.currencySelector, { backgroundColor: colors.background, borderColor: colors.border }]}
+              onPress={() => setShowCurrencyModal(true)}
+              disabled={loading}
+            >
+              <View style={styles.currencyInfo}>
+                <Text style={[styles.currencySymbol, { color: colors.text }]}>
+                  {getCurrencySymbol(currency)}
+                </Text>
+                <View style={styles.currencyDetails}>
+                  <Text style={[styles.currencyCode, { color: colors.text }]}>{currency}</Text>
+                  <Text style={[styles.currencyName, { color: colors.textSecondary }]}>
+                    {getCurrencyName(currency)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.changeText, { color: colors.primary }]}>Change</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -207,6 +236,57 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showCurrencyModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCurrencyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Select Currency</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={styles.closeButton}>
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={true}>
+              {CURRENCIES.map((curr) => (
+                <TouchableOpacity
+                  key={curr.code}
+                  style={[
+                    styles.currencyOption,
+                    { 
+                      backgroundColor: currency === curr.code ? colors.background : 'transparent',
+                      borderColor: currency === curr.code ? colors.primary : 'transparent'
+                    }
+                  ]}
+                  onPress={() => {
+                    setCurrency(curr.code);
+                    setShowCurrencyModal(false);
+                  }}
+                >
+                  <View style={styles.currencyOptionContent}>
+                    <Text style={[styles.currencyOptionSymbol, { color: colors.text }]}>
+                      {curr.symbol}
+                    </Text>
+                    <View style={styles.currencyOptionDetails}>
+                      <Text style={[styles.currencyOptionCode, { color: colors.text }]}>
+                        {curr.code}
+                      </Text>
+                      <Text style={[styles.currencyOptionName, { color: colors.textSecondary }]}>
+                        {curr.name}
+                      </Text>
+                    </View>
+                  </View>
+                  {currency === curr.code && <Check size={24} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -292,5 +372,96 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  currencySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  currencyInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  currencySymbol: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    width: 32,
+    textAlign: 'center',
+  },
+  currencyDetails: {
+    gap: 2,
+  },
+  currencyCode: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  currencyName: {
+    fontSize: 13,
+  },
+  changeText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalScroll: {
+    padding: 16,
+  },
+  currencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 2,
+  },
+  currencyOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  currencyOptionSymbol: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    width: 40,
+    textAlign: 'center',
+  },
+  currencyOptionDetails: {
+    gap: 2,
+  },
+  currencyOptionCode: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  currencyOptionName: {
+    fontSize: 13,
   },
 });

@@ -639,11 +639,14 @@ export const [AppProvider, useApp] = createContextHook(() => {
     return achievements;
   }, [getStreakData, safeToSpend]);
 
+  const currency = userProfile?.currency || 'USD';
+
   return useMemo(() => ({
     userProfile,
     expenses,
     loading,
     theme,
+    currency,
     toggleTheme,
     createUserProfile,
     updateUserProfile,
@@ -655,7 +658,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     getSpendingPrediction,
     getStreakData,
     getAchievements
-  }), [userProfile, expenses, loading, theme, toggleTheme, createUserProfile, updateUserProfile, addExpense, deleteExpense, safeToSpend, getEmotionalMessage, getDynamicGreeting, getSpendingPrediction, getStreakData, getAchievements]);
+  }), [userProfile, expenses, loading, theme, currency, toggleTheme, createUserProfile, updateUserProfile, addExpense, deleteExpense, safeToSpend, getEmotionalMessage, getDynamicGreeting, getSpendingPrediction, getStreakData, getAchievements]);
 });
 
 

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/colors';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react-native';
-import { PersonalityMode } from '@/types';
+import { PersonalityMode, CURRENCIES } from '@/types';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState<number>(1);
   const [name, setName] = useState<string>('');
+  const [currency, setCurrency] = useState<string>('USD');
   const [monthlyIncome, setMonthlyIncome] = useState<string>('');
   const [bills, setBills] = useState<string>('');
   const [mode, setMode] = useState<PersonalityMode>('bro');
@@ -25,13 +26,13 @@ export default function OnboardingScreen() {
       Alert.alert('Required', 'Please enter your name');
       return;
     }
-    if (step === 2) {
+    if (step === 3) {
       if (!monthlyIncome || parseFloat(monthlyIncome) <= 0) {
         Alert.alert('Required', 'Please enter your monthly income');
         return;
       }
     }
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
     }
   };
@@ -43,6 +44,7 @@ export default function OnboardingScreen() {
         name: name.trim(),
         monthlyIncome: parseFloat(monthlyIncome) || 0,
         bills: parseFloat(bills) || 0,
+        currency,
         mode,
         setupCompleted: true
       });
@@ -58,7 +60,7 @@ export default function OnboardingScreen() {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <View style={styles.progressContainer}>
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <View
               key={s}
               style={[
@@ -69,7 +71,7 @@ export default function OnboardingScreen() {
           ))}
         </View>
         <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-          Step {step} of 3
+          Step {step} of 4
         </Text>
       </View>
 
@@ -95,6 +97,49 @@ export default function OnboardingScreen() {
         )}
 
         {step === 2 && (
+          <View style={styles.stepContainer}>
+            <Text style={[styles.emoji, { color: colors.primary }]}>💱</Text>
+            <Text style={[styles.question, { color: colors.text }]}>
+              What&apos;s your currency?
+            </Text>
+            <ScrollView 
+              style={styles.currencyList}
+              contentContainerStyle={styles.currencyListContent}
+              showsVerticalScrollIndicator={true}
+            >
+              {CURRENCIES.map((curr) => (
+                <TouchableOpacity
+                  key={curr.code}
+                  style={[
+                    styles.currencyItem,
+                    { 
+                      backgroundColor: colors.card, 
+                      borderColor: currency === curr.code ? colors.primary : colors.border 
+                    }
+                  ]}
+                  onPress={() => setCurrency(curr.code)}
+                >
+                  <View style={styles.currencyInfo}>
+                    <Text style={[styles.currencySymbol, { color: colors.text }]}>
+                      {curr.symbol}
+                    </Text>
+                    <View style={styles.currencyDetails}>
+                      <Text style={[styles.currencyCode, { color: colors.text }]}>
+                        {curr.code}
+                      </Text>
+                      <Text style={[styles.currencyName, { color: colors.textSecondary }]}>
+                        {curr.name}
+                      </Text>
+                    </View>
+                  </View>
+                  {currency === curr.code && <Check size={24} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {step === 3 && (
           <View style={styles.stepContainer}>
             <Text style={[styles.emoji, { color: colors.primary }]}>💵</Text>
             <Text style={[styles.question, { color: colors.text }]}>
@@ -124,7 +169,7 @@ export default function OnboardingScreen() {
           </View>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <View style={styles.stepContainer}>
             <Text style={[styles.emoji, { color: colors.primary }]}>🎭</Text>
             <Text style={[styles.question, { color: colors.text }]}>
@@ -186,13 +231,13 @@ export default function OnboardingScreen() {
 
         <TouchableOpacity
           style={[styles.button, styles.nextButton, { backgroundColor: colors.primary }]}
-          onPress={step === 3 ? handleFinish : handleNext}
+          onPress={step === 4 ? handleFinish : handleNext}
           disabled={loading}
         >
           <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
-            {loading ? 'Please wait...' : step === 3 ? 'Finish' : 'Next'}
+            {loading ? 'Please wait...' : step === 4 ? 'Finish' : 'Next'}
           </Text>
-          {step < 3 && <ChevronRight size={20} color="#FFFFFF" />}
+          {step < 4 && <ChevronRight size={20} color="#FFFFFF" />}
         </TouchableOpacity>
       </View>
     </View>
@@ -298,5 +343,40 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  currencyList: {
+    maxHeight: 400,
+  },
+  currencyListContent: {
+    gap: 12,
+  },
+  currencyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  currencyInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  currencySymbol: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    width: 40,
+    textAlign: 'center',
+  },
+  currencyDetails: {
+    gap: 2,
+  },
+  currencyCode: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  currencyName: {
+    fontSize: 13,
   },
 });
